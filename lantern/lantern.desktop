@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Lantern
+Comment=Keep the laptop awake while plugged in
+Exec=lantern
+Icon=lantern-on
+Terminal=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true

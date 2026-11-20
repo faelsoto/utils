@@ -69,6 +69,10 @@ impl ksni::Tray for LanternTray {
         .into()
     }
 
+    fn icon_theme_path(&self) -> String {
+        xdg_dir("XDG_DATA_HOME", ".local/share").join("icons").to_string_lossy().into_owned()
+    }
+
     fn tool_tip(&self) -> ToolTip {
         ToolTip {
             title: "Lantern".into(),
@@ -111,11 +115,14 @@ impl ksni::Tray for LanternTray {
     }
 }
 
-fn state_file() -> PathBuf {
-    let base = std::env::var_os("XDG_STATE_HOME")
+fn xdg_dir(var: &str, fallback: &str) -> PathBuf {
+    std::env::var_os(var)
         .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".local/state"));
-    base.join(APP_ID).join("enabled")
+        .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(fallback))
+}
+
+fn state_file() -> PathBuf {
+    xdg_dir("XDG_STATE_HOME", ".local/state").join(APP_ID).join("enabled")
 }
 
 fn load_enabled() -> bool {

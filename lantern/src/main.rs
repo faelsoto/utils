@@ -5,8 +5,10 @@ use ksni::menu::{CheckmarkItem, StandardItem};
 use ksni::{MenuItem, ToolTip, TrayMethods};
 use tokio::signal::unix::{SignalKind, signal};
 use tokio::sync::mpsc;
+use zbus::fdo::RequestNameFlags;
 
 const APP_ID: &str = "lantern";
+const BUS_NAME: &str = "io.github.faelsoto.Lantern";
 const INHIBIT_SUSPEND: u32 = 4;
 const INHIBIT_IDLE: u32 = 8;
 
@@ -168,6 +170,18 @@ async fn sync_inhibitor(manager: &SessionManagerProxy<'_>, cookie: &mut Option<u
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let session = zbus::Connection::session().await?;
+    // Only DoNotQueue: zbus's default flags let a newer instance steal the name.
+    match session
+        .request_name_with_flags(BUS_NAME, RequestNameFlags::DoNotQueue.into())
+        .await
+    {
+        Ok(_) => {}
+        Err(zbus::Error::NameTaken) => {
+            eprintln!("{APP_ID}: already running");
+            return Ok(());
+        }
+        Err(e) => return Err(e.into()),
+    }
     let system = zbus::Connection::system().await?;
     let manager = SessionManagerProxy::new(&session).await?;
     let upower = UPowerProxy::new(&system).await?;
